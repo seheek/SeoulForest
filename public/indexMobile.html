@@ -1,0 +1,76 @@
+<html>
+<head>
+
+<title></title>
+<script src="/socket.io/socket.io.js"></script>
+<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+
+</head>
+<body>
+	<b style="color: red; font-size: 40px">MOBILE CLIENT</b>
+	<p>
+		인증번호: <input type="text" id="authNo" />
+		<button id="connectBtn">connect</button>
+		<button id="disconnectBtn">disconnect</button><hr>
+		Message <input type="text" id="msgbox" /> <br> <span id="msgs"></span>
+
+		<script type="text/javascript">
+//      var SERVER_IP = '121.166.177.31';
+      var SERVER_IP = 'localhost';
+      var SERVER_PORT = '3000';
+			var socket;
+			var isConnect = false;
+			var targetUid;
+
+			$(document).ready(function() {
+				$('#connectBtn').click(function() {
+					if (!isConnect) {
+						isConnect = true;
+						socket = io.connect('http://' + SERVER_IP + ':' + SERVER_PORT, {'forceNew': true});
+						// 접속과 동시에 user email 서버로 전송
+						socket.emit('login', {
+							'sender' : 'mobile',
+							'authNo' : $('#authNo').val()
+						});
+
+						socket.on('toclient', function(data) {
+							console.log(data.msg);
+							$('#msgs').append(data.msg + '<BR>');
+						});
+
+						socket.on('message', function(msg) {
+	              $('#msgs').append(msg + '<BR>');
+	              targetUid = msg;
+						});
+					}
+
+				});
+
+				$('#disconnectBtn').click(function() {
+					if (isConnect) {
+						socket.disconnect();
+			      targetUid = '';
+						isConnect = false;
+					}
+				});
+
+				$("#msgbox").keyup(function(event) {
+					if (event.which == 13) {
+						//socket.emit('fromclient',{msg:$('#msgbox').val()});
+
+						// 글쓴이1에게만 메세지 전송. 브라우저 콘솔에서 원할때 찍는게 나을듯...
+						socket.emit('message special user', {
+							uid : targetUid,
+							msg : $('#msgbox').val()
+						});
+						$('#msgbox').val('');
+
+					}
+				});
+			});
+		</script>
+
+
+
+</body>
+</html>

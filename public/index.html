@@ -1,0 +1,72 @@
+<html>
+<head>
+ 
+    <title></title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+ 
+</head>
+<body>
+    <b style="color: blue; font-size: 40px">WEB CLIENT</b><p>
+    email: <input type="text" id="email" />
+    <button id="connectBtn">connect</button>
+    <button id="disconnectBtn">disconnect</button><hr>
+    Message  <input type="text" id="msgbox"/>
+    <br>
+    <span id="msgs"></span>
+ 
+    <script type="text/javascript">
+
+//        var SERVER_IP = '121.166.177.31';
+        var SERVER_IP = 'localhost';
+        var SERVER_PORT = '3000';
+		    var socket;
+		    var isConnect = false;
+        
+        $(document).ready(function(){
+            $('#connectBtn').click(function() {
+                if (!isConnect) {
+                  isConnect = true;
+                  socket = io.connect('http://' + SERVER_IP + ':' + SERVER_PORT, {'forceNew': true});
+                  // 접속과 동시에 user email 서버로 전송
+                  socket.emit('login',{
+                    'sender': 'web',
+                    'email': $('#email').val()
+                  });
+
+                  // 서버측에서 socket.send(msg); 한것을 받아 살행
+                  socket.on('message', function (msg) {
+                      console.log(msg);
+                      $('#msgs').append(msg+'<BR>');
+                  });
+                  
+                  socket.on('toclient',function(data){
+                      console.log(data.msg);
+                      $('#msgs').append(data.msg+'<BR>');
+                  });
+                  
+                }
+
+              });
+
+              $('#disconnectBtn').click(function() {
+                if (isConnect) {
+                  socket.disconnect();
+                  isConnect = false;
+                }
+              });
+
+              
+              $("#msgbox").keyup(function(event) {
+                  if (event.which == 13) {
+                      socket.emit('fromclient',{msg:$('#msgbox').val()});
+                      $('#msgbox').val('');
+                  }
+              });
+        });
+        
+
+        
+    </script>
+</body>
+</html>
